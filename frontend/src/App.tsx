@@ -10,9 +10,10 @@ import type {
 } from './types/api';
 import './App.css';
 
-// Base API endpoints (support both Vite proxy and direct backend port)
-const API_BASE = '/api';
-const DIRECT_BACKEND = 'http://127.0.0.1:8000';
+// Base API endpoints (supports Vercel relative path, custom backend URL, and Vite dev proxy)
+const RAW_API_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
+const API_BASE = RAW_API_URL ? (RAW_API_URL.endsWith('/api') ? RAW_API_URL : `${RAW_API_URL}/api`) : '/api';
+const DIRECT_BACKEND = RAW_API_URL || 'http://127.0.0.1:8000';
 
 export function App() {
   const [headline, setHeadline] = useState<string>('');
@@ -41,8 +42,11 @@ export function App() {
     try {
       const res = await fetch(`${API_BASE}${path}`, options);
       return res;
-    } catch {
-      return fetch(`${DIRECT_BACKEND}${path}`, options);
+    } catch (err) {
+      if (import.meta.env.DEV && API_BASE !== DIRECT_BACKEND) {
+        return fetch(`${DIRECT_BACKEND}${path}`, options);
+      }
+      throw err;
     }
   }, []);
 

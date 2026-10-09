@@ -8,7 +8,7 @@ WORKSPACE_ROOT = BASE_DIR.parent
 
 def find_file(filename: str, env_var: str) -> Path:
     """
-    Search for a file in environment variable, root workspace, cwd, or backend directory.
+    Search for a file in environment variable, root workspace, cwd, Vercel task root, or backend directory.
     """
     # 1. Environment variable
     env_val = os.getenv(env_var)
@@ -17,23 +17,23 @@ def find_file(filename: str, env_var: str) -> Path:
         if p.is_file():
             return p
 
-    # 2. Workspace root
-    root_file = WORKSPACE_ROOT / filename
-    if root_file.is_file():
-        return root_file
+    # 2. Search all candidate locations
+    candidates = [
+        WORKSPACE_ROOT / filename,
+        Path.cwd() / filename,
+        BASE_DIR / filename,
+        Path(__file__).resolve().parent / filename,
+        Path("/var/task") / filename,
+        Path("/var/task/backend") / filename,
+        Path("/var/task/api") / filename,
+        Path(__file__).resolve().parents[2] / filename if len(Path(__file__).resolve().parents) > 2 else Path("/var/task") / filename,
+    ]
+    for candidate in candidates:
+        if candidate.is_file():
+            return candidate
 
-    # 3. Current working directory
-    cwd_file = Path.cwd() / filename
-    if cwd_file.is_file():
-        return cwd_file
-
-    # 4. Backend directory
-    backend_file = BASE_DIR / filename
-    if backend_file.is_file():
-        return backend_file
-
-    # Fallback to workspace root path for clear error messages
-    return root_file
+    # Fallback to workspace root path
+    return WORKSPACE_ROOT / filename
 
 MODEL_FILE_PATH = find_file("bangla_news_text_model.joblib", "MODEL_PATH")
 METADATA_FILE_PATH = find_file("model_metadata.json", "METADATA_PATH")

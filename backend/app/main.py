@@ -47,7 +47,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -104,11 +104,18 @@ async def general_exception_handler(request: Request, exc: Exception):
 
 
 @app.get("/health", response_model=HealthResponse, tags=["System"])
+@app.get("/api/health", response_model=HealthResponse, tags=["System"], include_in_schema=False)
 async def health_check():
     """
     System health check returning the model loading state and version.
     """
     service = ModelService.get_instance()
+    if not service.is_loaded:
+        try:
+            service.load_model()
+        except Exception as e:
+            logger.warning("Auto model load in health check failed: %s", e)
+
     is_ready = service.is_loaded
 
     return HealthResponse(
@@ -122,20 +129,25 @@ async def health_check():
 
 
 @app.get("/metadata", response_model=MetadataResponse, tags=["Model"])
+@app.get("/api/metadata", response_model=MetadataResponse, tags=["Model"], include_in_schema=False)
 async def get_metadata():
     """
     Returns full metadata for the trained model.
     """
     service = ModelService.get_instance()
     if not service.is_loaded:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Model is not yet initialized."
-        )
+        try:
+            service.load_model()
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=f"Model initialization failed: {e}"
+            )
     return service.get_metadata()
 
 
 @app.post("/predict", response_model=PredictResponse, tags=["Inference"])
+@app.post("/api/predict", response_model=PredictResponse, tags=["Inference"], include_in_schema=False)
 async def predict_news(payload: PredictRequest):
     """
     Classifies a news article using the loaded scikit-learn model.
@@ -143,10 +155,14 @@ async def predict_news(payload: PredictRequest):
     """
     service = ModelService.get_instance()
     if not service.is_loaded:
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Classifier model is not ready. Please verify that the model file is accessible."
-        )
+        try:
+            service.load_model()
+        except Exception as e:
+            logger.error("Lazy model load failed: %s", e)
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail=f"Classifier model is not ready: {e}"
+            )
 
     try:
         result = service.predict(content=payload.content, headline=payload.headline)
