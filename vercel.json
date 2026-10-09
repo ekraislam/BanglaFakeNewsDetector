@@ -1,17 +1,27 @@
 {
-  "version": 2,
-  "buildCommand": "cd frontend && npm install && npm run build",
-  "outputDirectory": "frontend/dist",
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "frontend": {
+      "root": "frontend",
+      "framework": "vite"
+    },
+    "api": {
+      "root": ".",
+      "framework": "fastapi"
+    }
+  },
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/api/index.py"
+      "destination": {
+        "service": "api"
+      }
+    },
+    {
+      "source": "/(.*)",
+      "destination": {
+        "service": "frontend"
+      }
     }
-  ],
-  "functions": {
-    "api/index.py": {
-      "includeFiles": "bangla_news_text_model.joblib,model_metadata.json,backend/**",
-      "maxDuration": 15
-    }
-  }
+  ]
 }
