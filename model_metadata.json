@@ -1,0 +1,15 @@
+{
+  "model_name": "Bangla News Text Classifier",
+  "model_type": "TF-IDF + Logistic Regression",
+  "input_feature": "content_only",
+  "input_expected": "Bangla news article content as text",
+  "prediction_mapping": {
+    "0": "authentic_label",
+    "1": "fake_label"
+  },
+  "training_rows": 51752,
+  "authentic_labelled_rows": 48820,
+  "fake_labelled_rows": 2932,
+  "training_data": "binary_candidate_no_known_label_conflicts.csv",
+  "warning": "Experimental dataset-label classifier. It does not independently verify factual truth. Labels may reflect satire, clickbait, source and annotation differences. Predicted probabilities are model scores, not verified probabilities that a claim is true or false."
+}
