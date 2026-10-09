@@ -248,3 +248,15 @@ Performs news text classification.
 - Model is loaded **once** at server startup using FastAPI's `lifespan` handler.
 - Original model files (`bangla_news_text_model.joblib`, `model_metadata.json`, `README_model.txt`) remain completely untouched.
 - Clean separation between frontend (React + Vite) and backend (FastAPI).
+
+---
+
+## 📄 License & Attribution
+
+This project is licensed under the [MIT License](LICENSE).
+
+```text
+Copyright (c) 2026 ekraislam (https://github.com/ekraislam)
+```
+
+Anyone using, modifying, or distributing this codebase is legally required to retain the above copyright notice and original attribution to the author. You may not claim this work as solely your own without crediting the original creator.
